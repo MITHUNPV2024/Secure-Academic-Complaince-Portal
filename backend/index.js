@@ -21,6 +21,10 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'Secure Academic Compliance Portal API', timestamp: new Date().toISOString() });
 });
 
+app.get('/_/backend/hello', (_req, res) => {
+  res.json({ message: 'Backend is working!' });
+});
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/complaints', require('./routes/complaints'));
 app.use('/api/admin', require('./routes/admin'));
