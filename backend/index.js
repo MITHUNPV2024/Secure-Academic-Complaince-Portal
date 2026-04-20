@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 require('dotenv').config();
+const { bootstrapDemoUsers } = require('./utils/bootstrapDemoUsers');
 
 const app = express();
 
@@ -11,7 +12,11 @@ app.use(express.json({ limit: '2mb' }));
 
 if (process.env.MONGODB_URI) {
   mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('MongoDB Connected'))
+    .then(async () => {
+      console.log('MongoDB Connected');
+      await bootstrapDemoUsers();
+      console.log('Demo users verified');
+    })
     .catch((err) => console.log('MongoDB Error:', err.message));
 } else {
   console.log('MONGODB_URI is not set');

@@ -191,40 +191,109 @@ function AdminDashboard() {
     <div>
       <nav className="navbar">
         <div className="nav-container">
-          <div className="nav-brand">Secure Academic Compliance Portal</div>
+          <div>
+            <div className="nav-brand">Secure Academic Compliance Portal</div>
+            <div className="nav-subtitle">Administrative governance workspace</div>
+          </div>
           <div className="nav-menu">
-            <span>{user.name} (admin)</span>
+            <span className="nav-user-pill">{user.name} (admin)</span>
             <button className="btn-logout" onClick={logout}>Logout</button>
           </div>
         </div>
       </nav>
 
       <div className="dashboard-container">
-        <h1>Admin Dashboard</h1>
+        <section className="page-hero">
+          <div>
+            <span className="section-kicker">Operations center</span>
+            <h1>Admin Dashboard</h1>
+            <p>Review complaints, manage users, supervise compliance activity and export governance-ready reports.</p>
+          </div>
+          <div className="hero-metrics">
+            <div className="hero-metric-card">
+              <span>Total complaints</span>
+              <strong>{dashboard.totalComplaints || 0}</strong>
+            </div>
+            <div className="hero-metric-card">
+              <span>Active users</span>
+              <strong>{users.filter((item) => !item.isBlocked).length}</strong>
+            </div>
+          </div>
+        </section>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-          <button className="btn-back" onClick={() => setView('dashboard')}>Overview</button>
-          <button className="btn-back" onClick={() => setView('complaints')}>Complaints</button>
-          <button className="btn-back" onClick={() => setView('users')}>Users</button>
-          <button className="btn-back" onClick={() => setView('logs')}>Activity Logs</button>
-          <button className="btn-back" onClick={() => setView('reports')}>Reports</button>
+        <div className="section-tabs">
+          <button className={`tab-button ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Overview</button>
+          <button className={`tab-button ${view === 'complaints' ? 'active' : ''}`} onClick={() => setView('complaints')}>Complaints</button>
+          <button className={`tab-button ${view === 'users' ? 'active' : ''}`} onClick={() => setView('users')}>Users</button>
+          <button className={`tab-button ${view === 'logs' ? 'active' : ''}`} onClick={() => setView('logs')}>Activity Logs</button>
+          <button className={`tab-button ${view === 'reports' ? 'active' : ''}`} onClick={() => setView('reports')}>Reports</button>
         </div>
 
         {error && <div className="alert-danger">{error}</div>}
         {success && <div className="alert-success">{success}</div>}
 
         {view === 'dashboard' && (
-          <div className="stats-grid">
-            <div className="stat-card"><h3>Total Complaints</h3><div className="stat-number">{dashboard.totalComplaints || 0}</div></div>
-            <div className="stat-card"><h3>Pending</h3><div className="stat-number">{dashboard.pending || 0}</div></div>
-            <div className="stat-card"><h3>In Review</h3><div className="stat-number">{dashboard.inReview || 0}</div></div>
-            <div className="stat-card"><h3>Resolved</h3><div className="stat-number">{(dashboard.approved || 0) + (dashboard.completed || 0)}</div></div>
-          </div>
+          <>
+            <div className="stats-grid">
+              <div className="stat-card"><h3>Total Complaints</h3><div className="stat-number">{dashboard.totalComplaints || 0}</div><p>All complaints currently in the system.</p></div>
+              <div className="stat-card"><h3>Pending</h3><div className="stat-number">{dashboard.pending || 0}</div><p>Waiting for assignment or review.</p></div>
+              <div className="stat-card"><h3>In Review</h3><div className="stat-number">{dashboard.inReview || 0}</div><p>Cases currently being worked.</p></div>
+              <div className="stat-card"><h3>Resolved</h3><div className="stat-number">{(dashboard.approved || 0) + (dashboard.completed || 0)}</div><p>Approved or completed workflows.</p></div>
+            </div>
+
+            <div className="overview-grid">
+              <div className="content-box soft-accent">
+                <div className="section-heading">
+                  <div>
+                    <span className="section-kicker">Team load</span>
+                    <h2>User distribution</h2>
+                  </div>
+                </div>
+                <div className="mini-stat-list">
+                  <div className="mini-stat-item">
+                    <span>Students</span>
+                    <strong>{users.filter((u) => u.role === 'student').length}</strong>
+                  </div>
+                  <div className="mini-stat-item">
+                    <span>Faculty</span>
+                    <strong>{users.filter((u) => u.role === 'faculty').length}</strong>
+                  </div>
+                  <div className="mini-stat-item">
+                    <span>Admins</span>
+                    <strong>{users.filter((u) => u.role === 'admin').length}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="content-box">
+                <div className="section-heading">
+                  <div>
+                    <span className="section-kicker">Audit trail</span>
+                    <h2>Recent activity</h2>
+                  </div>
+                </div>
+                {logs.slice(0, 3).length === 0 && <div className="no-data">No recent logs available.</div>}
+                <div className="notification-list compact">
+                  {logs.slice(0, 3).map((log) => (
+                    <div key={log._id} className="notification-item">
+                      <p>{log.action}</p>
+                      <small>{log.actor?.name || 'System'} - {new Date(log.createdAt).toLocaleString()}</small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {view === 'complaints' && (
           <div className="content-box">
-            <h2>Complaint Management</h2>
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">Operations</span>
+                <h2>Complaint Management</h2>
+              </div>
+            </div>
 
             <form onSubmit={applyFilters} className="add-form">
               <select value={filters.user} onChange={(e) => setFilters((p) => ({ ...p, user: e.target.value }))}>
@@ -280,7 +349,12 @@ function AdminDashboard() {
 
         {view === 'review' && reviewing && (
           <div className="content-box">
-            <h2>Review Complaint</h2>
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">Case review</span>
+                <h2>Review Complaint</h2>
+              </div>
+            </div>
             <p><strong>Title:</strong> {reviewing.title}</p>
             <p><strong>Submitter:</strong> {reviewing.submittedBy?.name} ({reviewing.submittedBy?.email})</p>
             <p><strong>Description:</strong> {reviewing.description}</p>
@@ -306,7 +380,7 @@ function AdminDashboard() {
               <div className="form-group">
                 <label>Admin Response</label>
                 <textarea
-                  style={{ width: '100%', minHeight: 90, padding: 10, borderRadius: 10, border: '1px solid #d2ddd8' }}
+                  className="text-area"
                   value={reviewPayload.adminResponse}
                   onChange={(e) => setReviewPayload((p) => ({ ...p, adminResponse: e.target.value }))}
                 />
@@ -322,15 +396,14 @@ function AdminDashboard() {
                 <input value={reviewPayload.comment} onChange={(e) => setReviewPayload((p) => ({ ...p, comment: e.target.value }))} />
               </div>
 
-              <div className="form-group" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div className="form-group checkbox-row">
                 <input
                   type="checkbox"
                   checked={reviewPayload.complianceCompleted}
                   onChange={(e) => setReviewPayload((p) => ({ ...p, complianceCompleted: e.target.checked }))}
                   id="completed"
-                  style={{ width: 16, height: 16 }}
                 />
-                <label htmlFor="completed" style={{ marginBottom: 0 }}>Mark compliance completed</label>
+                <label htmlFor="completed">Mark compliance completed</label>
               </div>
 
               <button className="btn-primary" type="submit">Save Review</button>
@@ -340,7 +413,12 @@ function AdminDashboard() {
 
         {view === 'users' && (
           <div className="content-box">
-            <h2>User Management</h2>
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">Directory</span>
+                <h2>User Management</h2>
+              </div>
+            </div>
 
             <form className="add-form" onSubmit={createUser}>
               <input placeholder="Name" value={newUser.name} onChange={(e) => setNewUser((p) => ({ ...p, name: e.target.value }))} required />
@@ -395,12 +473,11 @@ function AdminDashboard() {
                       <option value="faculty">faculty</option>
                       <option value="admin">admin</option>
                     </select>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label className="checkbox-row">
                       <input
                         type="checkbox"
                         checked={Boolean(editUser.isBlocked)}
                         onChange={(e) => setEditUser((p) => ({ ...p, isBlocked: e.target.checked }))}
-                        style={{ width: 16, height: 16 }}
                       />
                       Block account
                     </label>
@@ -416,7 +493,12 @@ function AdminDashboard() {
 
         {view === 'logs' && (
           <div className="content-box">
-            <h2>Activity Logs</h2>
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">Audit trail</span>
+                <h2>Activity Logs</h2>
+              </div>
+            </div>
             <table className="data-table">
               <thead>
                 <tr>
@@ -442,9 +524,14 @@ function AdminDashboard() {
 
         {view === 'reports' && (
           <div className="content-box">
-            <h2>Reports Export</h2>
-            <p>Download reports in JSON, Excel-compatible CSV, or PDF format.</p>
-            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">Exports</span>
+                <h2>Reports Export</h2>
+              </div>
+              <p className="section-note">Download reports in JSON, Excel-compatible CSV, or PDF format.</p>
+            </div>
+            <div className="action-row">
               <button className="btn-add" onClick={() => downloadReport('json')}>Download JSON</button>
               <button className="btn-add" onClick={() => downloadReport('excel')}>Download Excel (CSV)</button>
               <button className="btn-add" onClick={() => downloadReport('pdf')}>Download PDF</button>

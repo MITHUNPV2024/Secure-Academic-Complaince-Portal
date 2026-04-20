@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { api, authHeaders, clearSession, getStoredUser } from '../api';
 
 const categories = ['Academic', 'Infrastructure', 'Discipline', 'Others'];
+const roleTitles = {
+  student: 'Student Resolution Desk',
+  faculty: 'Faculty Coordination Desk'
+};
+const roleDescriptions = {
+  student: 'Raise concerns, track progress and stay updated on every response from the institution.',
+  faculty: 'Coordinate complaint follow-up, monitor case movement and keep communication consistent.'
+};
 
 function SharedUserDashboard({ role }) {
   const navigate = useNavigate();
@@ -123,39 +131,109 @@ function SharedUserDashboard({ role }) {
     <div>
       <nav className="navbar">
         <div className="nav-container">
-          <div className="nav-brand">Secure Academic Compliance Portal</div>
+          <div>
+            <div className="nav-brand">Secure Academic Compliance Portal</div>
+            <div className="nav-subtitle">Complaint intake, review and accountability</div>
+          </div>
           <div className="nav-menu">
-            <span>{user.name} ({role})</span>
+            <span className="nav-user-pill">{user.name} ({role})</span>
             <button className="btn-logout" onClick={logout}>Logout</button>
           </div>
         </div>
       </nav>
 
       <div className="dashboard-container">
-        <h1>{role === 'student' ? 'Student' : 'Faculty'} Dashboard</h1>
+        <section className="page-hero">
+          <div>
+            <span className="section-kicker">{role === 'student' ? 'Student workspace' : 'Faculty workspace'}</span>
+            <h1>{roleTitles[role]}</h1>
+            <p>{roleDescriptions[role]}</p>
+          </div>
+          <div className="hero-metrics">
+            <div className="hero-metric-card">
+              <span>Open complaints</span>
+              <strong>{summary.pending + summary.inReview}</strong>
+            </div>
+            <div className="hero-metric-card">
+              <span>Unread alerts</span>
+              <strong>{unreadCount}</strong>
+            </div>
+          </div>
+        </section>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-          <button className="btn-back" onClick={() => setActiveView('dashboard')}>Overview</button>
-          <button className="btn-back" onClick={() => setActiveView('new')}>New Complaint</button>
-          <button className="btn-back" onClick={() => setActiveView('complaints')}>My Complaints</button>
-          <button className="btn-back" onClick={() => setActiveView('notifications')}>Notifications ({unreadCount})</button>
+        <div className="section-tabs">
+          <button className={`tab-button ${activeView === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveView('dashboard')}>Overview</button>
+          <button className={`tab-button ${activeView === 'new' ? 'active' : ''}`} onClick={() => setActiveView('new')}>New Complaint</button>
+          <button className={`tab-button ${activeView === 'complaints' ? 'active' : ''}`} onClick={() => setActiveView('complaints')}>My Complaints</button>
+          <button className={`tab-button ${activeView === 'notifications' ? 'active' : ''}`} onClick={() => setActiveView('notifications')}>Notifications ({unreadCount})</button>
         </div>
 
         {error && <div className="alert-danger">{error}</div>}
         {success && <div className="alert-success">{success}</div>}
 
         {activeView === 'dashboard' && (
-          <div className="stats-grid">
-            <div className="stat-card"><h3>Total</h3><div className="stat-number">{summary.total}</div></div>
-            <div className="stat-card"><h3>Pending</h3><div className="stat-number">{summary.pending}</div></div>
-            <div className="stat-card"><h3>In Review</h3><div className="stat-number">{summary.inReview}</div></div>
-            <div className="stat-card"><h3>Resolved</h3><div className="stat-number">{summary.resolved}</div></div>
-          </div>
+          <>
+            <div className="stats-grid">
+              <div className="stat-card"><h3>Total</h3><div className="stat-number">{summary.total}</div><p>All complaints raised from your account.</p></div>
+              <div className="stat-card"><h3>Pending</h3><div className="stat-number">{summary.pending}</div><p>Awaiting triage or first response.</p></div>
+              <div className="stat-card"><h3>In Review</h3><div className="stat-number">{summary.inReview}</div><p>Currently being assessed by the institution.</p></div>
+              <div className="stat-card"><h3>Resolved</h3><div className="stat-number">{summary.resolved}</div><p>Closed with an approved or completed response.</p></div>
+            </div>
+
+            <div className="overview-grid">
+              <div className="content-box soft-accent">
+                <div className="section-heading">
+                  <div>
+                    <span className="section-kicker">Live queue</span>
+                    <h2>What needs attention now</h2>
+                  </div>
+                </div>
+                <div className="mini-stat-list">
+                  <div className="mini-stat-item">
+                    <span>Awaiting review</span>
+                    <strong>{summary.pending}</strong>
+                  </div>
+                  <div className="mini-stat-item">
+                    <span>Under review</span>
+                    <strong>{summary.inReview}</strong>
+                  </div>
+                  <div className="mini-stat-item">
+                    <span>Rejected</span>
+                    <strong>{summary.rejected}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="content-box">
+                <div className="section-heading">
+                  <div>
+                    <span className="section-kicker">Notifications</span>
+                    <h2>Recent updates</h2>
+                  </div>
+                </div>
+                {notifications.slice(0, 3).length === 0 && <div className="no-data">No recent updates yet.</div>}
+                <div className="notification-list compact">
+                  {notifications.slice(0, 3).map((item) => (
+                    <div key={item._id} className={`notification-item ${item.isRead ? '' : 'unread'}`}>
+                      <p>{item.message}</p>
+                      <small>{new Date(item.createdAt).toLocaleString()}</small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {activeView === 'new' && (
           <div className="content-box">
-            <h2>Submit Complaint</h2>
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">New submission</span>
+                <h2>Submit Complaint</h2>
+              </div>
+              <p className="section-note">Attach supporting files when you need evidence attached to the case timeline.</p>
+            </div>
             <form onSubmit={submitComplaint}>
               <div className="form-group">
                 <label>Title</label>
@@ -164,10 +242,10 @@ function SharedUserDashboard({ role }) {
               <div className="form-group">
                 <label>Description</label>
                 <textarea
+                  className="text-area"
                   value={form.description}
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                   required
-                  style={{ width: '100%', minHeight: 120, padding: 12, borderRadius: 12, border: '1px solid #d2ddd8' }}
                 />
               </div>
               <div className="form-group">
@@ -192,34 +270,42 @@ function SharedUserDashboard({ role }) {
         )}
 
         {activeView === 'complaints' && (
-          <div style={{ display: 'grid', gap: 14 }}>
+          <div className="stack-grid">
             {complaints.length === 0 && <div className="no-data">No complaints submitted yet.</div>}
             {complaints.map((complaint) => (
-              <div key={complaint._id} className="content-box">
-                <h2 style={{ fontSize: 24 }}>{complaint.title}</h2>
-                <p><strong>Category:</strong> {complaint.category}</p>
-                <p><strong>Status:</strong> {complaint.status}</p>
-                <p><strong>Submitted:</strong> {new Date(complaint.createdAt).toLocaleString()}</p>
-                <p><strong>Description:</strong> {complaint.description}</p>
+              <div key={complaint._id} className="content-box complaint-card">
+                <div className="complaint-header">
+                  <div>
+                    <h2 className="complaint-title">{complaint.title}</h2>
+                    <div className="meta-row">
+                      <span className="pill-tag">{complaint.category}</span>
+                      <span className="pill-tag subtle">{new Date(complaint.createdAt).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <span className="status-pill">{complaint.status}</span>
+                </div>
+
+                <p className="complaint-description">{complaint.description}</p>
                 {complaint.adminResponse && <p><strong>Admin Response:</strong> {complaint.adminResponse}</p>}
 
                 {complaint.supportingDocument?.originalName && (
                   <button className="btn-edit" onClick={() => downloadDocument(complaint)}>Download Document</button>
                 )}
 
-                <div style={{ marginTop: 10 }}>
-                  <h3 style={{ fontSize: 18, marginBottom: 8 }}>Comments</h3>
-                  {(complaint.comments || []).length === 0 && <p className="no-data" style={{ padding: 14 }}>No comments yet.</p>}
-                  {(complaint.comments || []).map((comment, idx) => (
-                    <div key={`${complaint._id}-${idx}`} style={{ marginBottom: 8, padding: 8, borderRadius: 8, background: '#f4faf8' }}>
-                      <strong>{comment.role}</strong> ({comment.author?.name || 'Unknown'})
-                      <div>{comment.message}</div>
-                    </div>
-                  ))}
+                <div className="comment-section">
+                  <h3>Comments</h3>
+                  {(complaint.comments || []).length === 0 && <p className="no-data compact-empty">No comments yet.</p>}
+                  <div className="comment-list">
+                    {(complaint.comments || []).map((comment, idx) => (
+                      <div key={`${complaint._id}-${idx}`} className="comment-card">
+                        <strong>{comment.role}</strong> ({comment.author?.name || 'Unknown'})
+                        <div>{comment.message}</div>
+                      </div>
+                    ))}
+                  </div>
 
-                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <div className="comment-composer">
                     <input
-                      style={{ flex: 1 }}
                       value={commentMap[complaint._id] || ''}
                       onChange={(e) => setCommentMap((prev) => ({ ...prev, [complaint._id]: e.target.value }))}
                       placeholder="Add comment"
@@ -234,21 +320,28 @@ function SharedUserDashboard({ role }) {
 
         {activeView === 'notifications' && (
           <div className="content-box">
-            <h2>Notifications</h2>
-            {notifications.length === 0 && <p className="no-data">No notifications available.</p>}
-            {notifications.map((item) => (
-              <div key={item._id} style={{ padding: 10, borderBottom: '1px solid #e6ece8' }}>
-                <p>{item.message}</p>
-                <small>{new Date(item.createdAt).toLocaleString()}</small>
-                {!item.isRead && (
-                  <div>
-                    <button className="btn-edit" type="button" onClick={() => markRead(item._id)} style={{ marginTop: 6 }}>
-                      Mark as read
-                    </button>
-                  </div>
-                )}
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">Inbox</span>
+                <h2>Notifications</h2>
               </div>
-            ))}
+            </div>
+            {notifications.length === 0 && <p className="no-data">No notifications available.</p>}
+            <div className="notification-list">
+              {notifications.map((item) => (
+                <div key={item._id} className={`notification-item ${item.isRead ? '' : 'unread'}`}>
+                  <p>{item.message}</p>
+                  <small>{new Date(item.createdAt).toLocaleString()}</small>
+                  {!item.isRead && (
+                    <div className="notification-actions">
+                      <button className="btn-edit" type="button" onClick={() => markRead(item._id)}>
+                        Mark as read
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
